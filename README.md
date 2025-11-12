@@ -112,10 +112,4 @@ Aplicatia este dezvoltata incremental, urmand mai multe etape logice si tehnice.
 
 ---
 
-## Concluzie
-
-Aceasta aplicatie reprezinta un instrument complet pentru gestionarea bug-urilor intr-un mediu colaborativ, asigurand o mai buna transparenta, eficienta si comunicare intre membrii echipei de dezvoltare si testeri.
-
----
-
 
