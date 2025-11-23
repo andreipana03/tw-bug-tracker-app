@@ -6,15 +6,22 @@ const User = require('./models/User.js');
 const Project = require('./models/Project.js');
 const Bug = require('./models/Bug.js');
 const ProjectMember = require('./models/ProjectMember.js');
+const userRoutes=require('./routes/user/userRouter.js');
+const projectMemberRoutes=require("./routes/projectMember/projectMemberRouter.js");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(express.json());
+app.use('/api/users',userRoutes);
+app.use("/api/project-members",projectMemberRoutes);
 
 app.get('/', (req, res) => {
   res.send('Backend-ul functioneaza!');
 });
+
+const { errorHandler } = require("./middlewares/error.middlewares.js");
+app.use(errorHandler);
 
 const startServer = async () => {
   try {
@@ -27,7 +34,7 @@ const startServer = async () => {
     console.log('Conexiunea la baza de date a fost stabilita cu succes');
 
     //Creeaza tabelele
-    await sequelize.sync({ alter: true }); 
+    await sequelize.sync(); 
 
     console.log('Modelele au fost sincronizate');
 
