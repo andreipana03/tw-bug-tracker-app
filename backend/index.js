@@ -8,6 +8,7 @@ const Bug = require('./models/Bug.js');
 const ProjectMember = require('./models/ProjectMember.js');
 const userRoutes=require('./routes/user/userRouter.js');
 const projectMemberRoutes=require("./routes/projectMember/projectMemberRouter.js");
+const projectRoutes = require("./routes/project/projectRouter.js");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -15,6 +16,7 @@ const PORT = process.env.PORT || 3001;
 app.use(express.json());
 app.use('/api/users',userRoutes);
 app.use("/api/project-members",projectMemberRoutes);
+app.use("/api/project", projectRoutes);
 
 app.get('/', (req, res) => {
   res.send('Backend-ul functioneaza!');
