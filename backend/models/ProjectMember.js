@@ -5,7 +5,10 @@ const Project = require('./Project.js');
 
 const ProjectMember = sequelize.define('ProjectMember', {});
 
-User.belongsToMany(Project, { through: ProjectMember, foreignKey: 'userId' });//un user(mp) poate face parte din mai multe proiecte
-Project.belongsToMany(User, { through: ProjectMember, foreignKey: 'projectId' });//un proiect poate avea mai multi membri
+User.belongsToMany(Project, { through: ProjectMember, as: 'memberProjects', foreignKey: 'userId' });//un user(mp) poate face parte din mai multe proiecte
+Project.belongsToMany(User, { through: ProjectMember, as: 'members', foreignKey: 'projectId' });//un proiect poate avea mai multi membri
+
+ProjectMember.belongsTo(User, { foreignKey: 'userId' });
+ProjectMember.belongsTo(Project, { foreignKey: 'projectId' });
 
 module.exports = ProjectMember;

@@ -1,9 +1,9 @@
 const ProjectMember = require("../../models/ProjectMember.js");
 const Project = require("../../models/Project.js");
-const User=require("../../models/User.js")
+const User = require("../../models/User.js");
 
 //adaugare membru(doar ownerul proiectului poate adauga membri)
-const addProjectMember = async (req, res) => {
+const addProjectMember = async (req, res, next) => {
   try {
     const { projectId, userId } = req.body;
     const project = await Project.findByPk(projectId);
@@ -20,21 +20,22 @@ const addProjectMember = async (req, res) => {
     }
 
     const member = await ProjectMember.create({ projectId, userId });
-    res.status(201).json(memeber);
+    res.status(201).json(member);
   } catch (error) {
     next(error);
   }
 };
 
-const getProjectMembers = async (req, res) => {
+const getProjectMembers = async (req, res, next) => {
   try {
     const { projectId } = req.body;
     const members = await ProjectMember.findAll({
-       where: { projectId },
-       include: {
+      where: { projectId },
+      include: {
         model: User,
-        attributes: ["id", "email", "role"]
-      } });
+        attributes: ["id", "email", "role"],
+      },
+    });
 
     res.json(members);
   } catch (error) {
@@ -44,17 +45,17 @@ const getProjectMembers = async (req, res) => {
 
 //stergere memebru (doar ownerul are permisiune)
 
-const deleteProjectMember = async (req, res) => {
+const deleteProjectMember = async (req, res,next) => {
   try {
     const { id } = req.params;
 
-    const memeber = await ProjectMember.findByPk(id);
+    const member = await ProjectMember.findByPk(id);
 
     if (!member) {
       return res.status(404).json({ message: "Project member not found" });
     }
 
-    const project = await Project.findByPk(memeber.projectId);
+    const project = await Project.findByPk(member.projectId);
 
     if (req.user.id !== project.ownerId) {
       return res.status(403).json({ message: "Only owner can remove member" });

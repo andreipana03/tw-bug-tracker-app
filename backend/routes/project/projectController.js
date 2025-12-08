@@ -1,5 +1,7 @@
 const Project = require("../../models/Project.js");
 const User = require("../../models/User.js");
+const ProjectMember = require("../../models/ProjectMember.js");
+const Bug = require("../../models/Bug.js");
 
 // POST /projects - create project (only MP)
 const createProject = async (req, res, next) => {
@@ -7,15 +9,19 @@ const createProject = async (req, res, next) => {
     const { projectName, repositoryName } = req.body;
 
     if (!projectName || !repositoryName) {
-      return res.status(400).json({ message: "projectName and repositoryName are required" });
+      return res
+        .status(400)
+        .json({ message: "projectName and repositoryName are required" });
     }
 
-    // validare - doar MP poate sa creeze proiecte
+   
     if (req.user.role !== "MP") {
-      return res.status(403).json({ message: "Only MP users can create projects" });
+      return res
+        .status(403)
+        .json({ message: "Only MP users can create projects" });
     }
 
-    // ownerul proiectului este mereu utilizatorul care creeaza proiectul
+    
     const ownerId = req.user.id;
 
     const project = await Project.create({
@@ -36,17 +42,65 @@ const getProjects = async (req, res, next) => {
   try {
     const userId = req.user.id;
 
-    const projects = await Project.findAll({
+    
+    const owned = await Project.findAll({
       where: { ownerId: userId },
+      include: [
+        { model: User, as: "owner", attributes: ["id", "email", "role"] },
+        { model: User, as: "members", attributes: ["id", "email", "role"] },
+      ],
+    });
+
+    
+    const memberProjects = await Project.findAll({
       include: [
         {
           model: User,
+          as: "members",
+          where: { id: userId },
+          attributes: [],
+        },
+        {
+          model: User,
+          as: "owner",
+          attributes: ["id", "email", "role"],
+        },
+        {
+          model: User,
+          as: "members",
           attributes: ["id", "email", "role"],
         },
       ],
     });
 
-    res.json(projects);
+    
+    const allProjects = {};
+    owned.forEach((p) => (allProjects[p.id] = p));
+    memberProjects.forEach((p) => (allProjects[p.id] = p));
+    const finalList = Object.values(allProjects);
+
+    const response = finalList.map((proj) => ({
+      id: proj.id,
+      projectName: proj.projectName,
+      repositoryName: proj.repositoryName,
+      owner: proj.owner
+        ? {
+            id: proj.owner.id,
+            email: proj.owner.email,
+            role: proj.owner.role,
+          }
+        : null,
+      members:
+        proj.members?.map((m) => ({
+          id: m.id,
+          email: m.email,
+          role: m.role,
+        })) || [],
+      createdAt: proj.createdAt,
+      updatedAt: proj.updatedAt,
+    }));
+
+    res.json(response);
   } catch (error) {
     next(error);
   }
@@ -57,12 +111,31 @@ const getProjects = async (req, res, next) => {
 const getProjectById = async (req, res, next) => {
   try {
     const projectId = req.params.id;
+    const userId = req.user.id;
 
     const project = await Project.findByPk(projectId, {
       include: [
         {
           model: User,
+          as: "owner",
           attributes: ["id", "email", "role"],
+        },
+        {
+          model: User,
+          as: "members",
+          attributes: ["id", "email", "role"],
+          through: { attributes: [] },
+        },
+        {
+          model: Bug,
+          attributes: [
+            "id",
+            "description",
+            "priority",
+            "bugStatus",
+            "commit_link",
+            "assignedToId",
+          ],
         },
       ],
     });
@@ -71,25 +144,45 @@ const getProjectById = async (req, res, next) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    if (project.ownerId !== req.user.id) {
-      return res.status(403).json({ message: "You do not have access to this project" });
+   
+    const isOwner = project.ownerId === userId;
+
+   
+    const isMember = await ProjectMember.findOne({
+      where: { projectId, userId },
+    });
+
+    if (!isOwner && !isMember) {
+      return res
+        .status(403)
+        .json({ message: "You do not have access to this project" });
     }
 
-    // If you later add ProjectMember / Bug models, you can include them here.
     const response = {
       id: project.id,
       projectName: project.projectName,
       repositoryName: project.repositoryName,
-      ownerId: project.ownerId,
-      owner: project.User
+      owner: project.owner
         ? {
-            id: project.User.id,
-            email: project.User.email,
-            role: project.User.role,
+            id: project.owner.id,
+            email: project.owner.email,
+            role: project.owner.role,
           }
         : null,
-      members: [], // TODO: fill with real team members when you add a model
-      bugs: [], // TODO: fill with real bugs when you add a model
+      members:
+        project.members?.map((m) => ({
+          id: m.id,
+          email: m.email,
+          role: m.role,
+        })) || [],
+      bugs: project.Bugs?.map(b => ({
+        id: b.id,
+        description: b.description,
+        priority: b.priority,
+        status: b.bugStatus,
+        commit_link: b.commit_link,
+        assignedToId: b.assignedToId
+      })) || [],
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
     };
@@ -112,9 +205,11 @@ const updateProject = async (req, res, next) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    // Doar ownerul poate modifica
+    
     if (project.ownerId !== req.user.id) {
-      return res.status(403).json({ message: "Only the project owner can modify this project" });
+      return res
+        .status(403)
+        .json({ message: "Only the project owner can modify this project" });
     }
 
     if (projectName !== undefined) {
@@ -143,9 +238,11 @@ const deleteProject = async (req, res, next) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    // Doar ownerul poate sterge proiectul
+    
     if (project.ownerId !== req.user.id) {
-      return res.status(403).json({ message: "Only the project owner can delete this project" });
+      return res
+        .status(403)
+        .json({ message: "Only the project owner can delete this project" });
     }
 
     await project.destroy();

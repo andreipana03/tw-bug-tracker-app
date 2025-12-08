@@ -13,7 +13,8 @@ const Project = sequelize.define('Project', {
   }
 });
 
-Project.belongsTo(User, { foreignKey: 'ownerId' }); // fiecare proiect are un owner
-User.hasMany(Project, { foreignKey: 'ownerId' });
+
+Project.belongsTo(User, { as: 'owner', foreignKey: 'ownerId' });
+User.hasMany(Project, { as: 'ownedProjects', foreignKey: 'ownerId' });
 
 module.exports = Project;
