@@ -8,8 +8,19 @@ const addProjectMember = async (req, res, next) => {
     const { projectId, userId } = req.body;
     const project = await Project.findByPk(projectId);
 
-    if (req.user.id !== project.ownerId) {
-      return res.status(403).json({ message: "Only owner can add members" });
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    const currentUserId = Number(req.user.id);
+    const targetUserId = Number(userId);
+    const projectOwnerId = Number(project.ownerId);
+
+    const isOwner = currentUserId === projectOwnerId;
+    const isSelfJoin = currentUserId === targetUserId;
+
+    if (!isOwner && !isSelfJoin) {
+      return res.status(403).json({ message: "Not authorized to add members" });
     }
 
     const existing = await ProjectMember.findOne({
@@ -45,7 +56,7 @@ const getProjectMembers = async (req, res, next) => {
 
 //stergere memebru (doar ownerul are permisiune)
 
-const deleteProjectMember = async (req, res,next) => {
+const deleteProjectMember = async (req, res, next) => {
   try {
     const { id } = req.params;
 

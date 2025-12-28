@@ -14,14 +14,12 @@ const createProject = async (req, res, next) => {
         .json({ message: "projectName and repositoryName are required" });
     }
 
-   
     if (req.user.role !== "MP") {
       return res
         .status(403)
         .json({ message: "Only MP users can create projects" });
     }
 
-    
     const ownerId = req.user.id;
 
     const project = await Project.create({
@@ -41,8 +39,18 @@ const createProject = async (req, res, next) => {
 const getProjects = async (req, res, next) => {
   try {
     const userId = req.user.id;
+    const userRole = req.user.role;
 
-    
+    if (userRole === "TST") {
+      const allProjects = await Project.findAll({
+        include: [
+          { model: User, as: "owner", attributes: ["id", "email", "role"] },
+          { model: User, as: "members", attributes: ["id"] }
+        ],
+      });
+      return res.json(allProjects);
+    }
+
     const owned = await Project.findAll({
       where: { ownerId: userId },
       include: [
@@ -51,7 +59,6 @@ const getProjects = async (req, res, next) => {
       ],
     });
 
-    
     const memberProjects = await Project.findAll({
       include: [
         {
@@ -73,7 +80,6 @@ const getProjects = async (req, res, next) => {
       ],
     });
 
-    
     const allProjects = {};
     owned.forEach((p) => (allProjects[p.id] = p));
     memberProjects.forEach((p) => (allProjects[p.id] = p));
@@ -144,10 +150,8 @@ const getProjectById = async (req, res, next) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-   
     const isOwner = project.ownerId === userId;
 
-   
     const isMember = await ProjectMember.findOne({
       where: { projectId, userId },
     });
@@ -175,14 +179,15 @@ const getProjectById = async (req, res, next) => {
           email: m.email,
           role: m.role,
         })) || [],
-      bugs: project.Bugs?.map(b => ({
-        id: b.id,
-        description: b.description,
-        priority: b.priority,
-        status: b.bugStatus,
-        commit_link: b.commit_link,
-        assignedToId: b.assignedToId
-      })) || [],
+      bugs:
+        project.Bugs?.map((b) => ({
+          id: b.id,
+          description: b.description,
+          priority: b.priority,
+          status: b.bugStatus,
+          commit_link: b.commit_link,
+          assignedToId: b.assignedToId,
+        })) || [],
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
     };
@@ -205,7 +210,6 @@ const updateProject = async (req, res, next) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    
     if (project.ownerId !== req.user.id) {
       return res
         .status(403)
@@ -238,7 +242,6 @@ const deleteProject = async (req, res, next) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    
     if (project.ownerId !== req.user.id) {
       return res
         .status(403)

@@ -3,10 +3,9 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 //inregistrare utilizator
-const registerUser = async (req, res) => {
+const registerUser = async (req, res, next) => {
   try {
     const { email, password, role } = req.body;
-
 
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
@@ -28,10 +27,9 @@ const registerUser = async (req, res) => {
 };
 
 //autentificare
-const loginUser = async (req, res) => {
+const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-
 
     const user = await User.findOne({ where: { email } });
     if (!user) {
@@ -56,7 +54,7 @@ const loginUser = async (req, res) => {
 };
 
 //detalii utilizator
-const getUserById = async (req, res) => {
+const getUserById = async (req, res, next) => {
   try {
     const user = await User.findByPk(req.params.id, {
       attributes: ["id", "email", "role", "createdAt", "updatedAt"],
@@ -72,9 +70,20 @@ const getUserById = async (req, res) => {
   }
 };
 
+const getAllUsers = async (req, res, next) => {
+  try {
+    const users = await User.findAll({
+      attributes: ["id", "email", "role"],
+    });
+    res.json(users);
+  } catch (error) {
+    next(error);
+  }
+};
 
 module.exports = {
   registerUser,
   loginUser,
-  getUserById
+  getUserById,
+  getAllUsers,
 };

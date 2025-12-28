@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const cors = require('cors');
 const sequelize = require('./db.js');
 const User = require('./models/User.js');
 const Project = require('./models/Project.js');
@@ -15,6 +16,7 @@ const bugRouter = require('./routes/bug/bugRouter.js');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+app.use(cors());
 app.use(express.json());
 app.use('/api/users',userRoutes);
 app.use("/api/project-members",projectMemberRoutes);

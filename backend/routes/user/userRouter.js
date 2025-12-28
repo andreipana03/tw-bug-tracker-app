@@ -1,22 +1,28 @@
-const express = require('express');
-const router=express.Router();
+const express = require("express");
+const router = express.Router();
 
 const {
   registerUser,
   loginUser,
-  getUserById
+  getUserById,
+  getAllUsers,
+} = require("./userController.js");
 
-}=require('./userController.js');
-
-const {validateRegister,validateLogin}=require('../../middlewares/validation.middlewares.js');
+const {
+  validateRegister,
+  validateLogin,
+} = require("../../middlewares/validation.middlewares.js");
 
 //inregistrare utilizator
-router.post('/',validateRegister,registerUser);
+router.post("/", validateRegister, registerUser);
 
 //autentificare
-router.post('/login',validateLogin,loginUser);
+router.post("/login", validateLogin, loginUser);
 
 //detalii utilizator
-router.get('/:id',getUserById);
+router.get("/:id", getUserById);
 
-module.exports=router;
+//afisare utilizatori
+router.get("/", getAllUsers);
+
+module.exports = router;
