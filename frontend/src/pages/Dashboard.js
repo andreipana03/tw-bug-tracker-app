@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ProjectCard from "../components/ProjectCard";
+import { API_BASE_URL } from "../config";
 import "./Dashboard.css";
 
 const Dashboard = () => {
@@ -39,7 +40,7 @@ const Dashboard = () => {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5000/api/users", {
+      const response = await fetch(`${API_BASE_URL}/api/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
@@ -61,7 +62,7 @@ const Dashboard = () => {
   const fetchProjects = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5000/api/project", {
+      const response = await fetch(`${API_BASE_URL}/api/project`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -102,7 +103,7 @@ const Dashboard = () => {
     try {
       const token = localStorage.getItem("token");
 
-      const response = await fetch("http://localhost:5000/api/project", {
+      const response = await fetch(`${API_BASE_URL}/api/project`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -131,20 +132,17 @@ const Dashboard = () => {
       const token = localStorage.getItem("token");
       const userId = localStorage.getItem("userId");
 
-      const response = await fetch(
-        "http://localhost:5000/api/project-members",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            projectId: projectId,
-            userId: userId,
-          }),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/api/project-members`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          projectId: projectId,
+          userId: userId,
+        }),
+      });
 
       const data = await response.json();
 
@@ -171,15 +169,12 @@ const Dashboard = () => {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(
-        `http://localhost:5000/api/project/${projectId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/api/project/${projectId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (response.ok) {
         alert("Proiect șters cu succes.");

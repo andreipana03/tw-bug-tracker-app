@@ -58,18 +58,28 @@ const getProjectMembers = async (req, res, next) => {
 
 const deleteProjectMember = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const { userId, projectId } = req.body;
 
-    const member = await ProjectMember.findByPk(id);
-
-    if (!member) {
-      return res.status(404).json({ message: "Project member not found" });
+    if (!userId || !projectId) {
+      return res.status(400).json({ message: "userId and projectId are required" });
     }
 
-    const project = await Project.findByPk(member.projectId);
+    const project = await Project.findByPk(projectId);
+
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
 
     if (req.user.id !== project.ownerId) {
       return res.status(403).json({ message: "Only owner can remove member" });
+    }
+
+    const member = await ProjectMember.findOne({
+      where: { projectId, userId },
+    });
+
+    if (!member) {
+      return res.status(404).json({ message: "Project member not found" });
     }
 
     await member.destroy();

@@ -45,7 +45,7 @@ const getProjects = async (req, res, next) => {
       const allProjects = await Project.findAll({
         include: [
           { model: User, as: "owner", attributes: ["id", "email", "role"] },
-          { model: User, as: "members", attributes: ["id"] }
+          { model: User, as: "members", attributes: ["id"] },
         ],
       });
       return res.json(allProjects);

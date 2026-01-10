@@ -18,6 +18,6 @@ router.post("/", verifyToken, validateProjectMember,addProjectMember);
 router.get("/:projectId", verifyToken, getProjectMembers);
 
 //stergere memebru
-router.delete("/:id", verifyToken, deleteProjectMember);
+router.delete("/", verifyToken, deleteProjectMember);
 
 module.exports = router;
