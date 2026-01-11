@@ -1,4 +1,3 @@
-import React from 'react';
 
 const ProjectCard = ({ project, role, currentUserId, onDelete, onJoin, onManage }) => {
   const isOwner = project.owner && project.owner.id === currentUserId;
@@ -8,15 +7,6 @@ const ProjectCard = ({ project, role, currentUserId, onDelete, onJoin, onManage 
     <div className="project-card">
       <div className="card-header">
         <h4 className="project-title">{project.projectName}</h4>
-        {isOwner && (
-          <button
-            className="delete-btn"
-            onClick={() => onDelete(project.id)} 
-            title="Șterge Proiectul"
-          >
-            Sterge proiect
-          </button>
-        )}
       </div>
 
       <p>
@@ -25,7 +15,7 @@ const ProjectCard = ({ project, role, currentUserId, onDelete, onJoin, onManage 
           href={project.repositoryName} 
           target="_blank" 
           rel="noopener noreferrer"
-          style={{ color: '#007bff', textDecoration: 'none' }}
+          style={{ color: '#007bff', textDecoration: 'none', wordBreak: 'break-all' }}
         >
           {project.repositoryName}
         </a>
@@ -48,6 +38,16 @@ const ProjectCard = ({ project, role, currentUserId, onDelete, onJoin, onManage 
           onClick={() => onJoin(project.id)}
         >
           Join
+        </button>
+      )}
+
+      {isOwner && (
+        <button
+          className="delete-btn"
+          onClick={() => onDelete(project.id)} 
+          title="Șterge Proiectul"
+        >
+          Sterge proiect
         </button>
       )}
     </div>

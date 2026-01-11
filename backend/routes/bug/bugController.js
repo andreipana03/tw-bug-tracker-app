@@ -4,7 +4,7 @@ const User = require("../../models/User.js");
 
 const createBug = async (req, res, next) => {
   try {
-    const { description, priority, commit_link, projectId } = req.body;
+    const { description, priority, severity, commit_link, projectId } = req.body;
     
     if (req.user.role !== 'TST') {
        return res.status(403).json({ message: "Only TST users can report bugs" });
@@ -18,6 +18,7 @@ const createBug = async (req, res, next) => {
     const newBug = await Bug.create({
       description,
       priority,
+      severity,
       commit_link,
       projectId,
       reporterId: req.user.id,
@@ -88,10 +89,10 @@ const updateBug = async (req, res, next) => {
         return res.status(403).json({ message: "Only MP users can update bugs" });
     }
 
-    if (bugStatus) bug.bugStatus = bugStatus;
-    if (priority) bug.priority = priority;
-    if (commit_link) bug.commit_link = commit_link;
-    if (assignedToId) bug.assignedToId = assignedToId;
+    if (bugStatus !== undefined) bug.bugStatus = bugStatus;
+    if (priority !== undefined) bug.priority = priority;
+    if (commit_link !== undefined) bug.commit_link = commit_link;
+    if (assignedToId !== undefined) bug.assignedToId = assignedToId;
 
     await bug.save();
     res.json(bug);

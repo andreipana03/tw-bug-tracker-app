@@ -59,54 +59,7 @@ const getProjects = async (req, res, next) => {
       ],
     });
 
-    const memberProjects = await Project.findAll({
-      include: [
-        {
-          model: User,
-          as: "members",
-          where: { id: userId },
-          attributes: [],
-        },
-        {
-          model: User,
-          as: "owner",
-          attributes: ["id", "email", "role"],
-        },
-        {
-          model: User,
-          as: "members",
-          attributes: ["id", "email", "role"],
-        },
-      ],
-    });
 
-    const allProjects = {};
-    owned.forEach((p) => (allProjects[p.id] = p));
-    memberProjects.forEach((p) => (allProjects[p.id] = p));
-    const finalList = Object.values(allProjects);
-
-    const response = finalList.map((proj) => ({
-      id: proj.id,
-      projectName: proj.projectName,
-      repositoryName: proj.repositoryName,
-      owner: proj.owner
-        ? {
-            id: proj.owner.id,
-            email: proj.owner.email,
-            role: proj.owner.role,
-          }
-        : null,
-      members:
-        proj.members?.map((m) => ({
-          id: m.id,
-          email: m.email,
-          role: m.role,
-        })) || [],
-      createdAt: proj.createdAt,
-      updatedAt: proj.updatedAt,
-    }));
-
-    res.json(response);
   } catch (error) {
     next(error);
   }
@@ -138,9 +91,17 @@ const getProjectById = async (req, res, next) => {
             "id",
             "description",
             "priority",
+            "severity",
             "bugStatus",
             "commit_link",
             "assignedToId",
+          ],
+          include: [
+            {
+              model: User,
+              as: "assignedTo",
+              attributes: ["id", "email"],
+            },
           ],
         },
       ],
@@ -161,6 +122,8 @@ const getProjectById = async (req, res, next) => {
         .status(403)
         .json({ message: "You do not have access to this project" });
     }
+
+
 
     const response = {
       id: project.id,
@@ -184,9 +147,11 @@ const getProjectById = async (req, res, next) => {
           id: b.id,
           description: b.description,
           priority: b.priority,
-          status: b.bugStatus,
+          severity: b.severity,
+          bugStatus: b.bugStatus,
           commit_link: b.commit_link,
           assignedToId: b.assignedToId,
+          assignedTo: b.assignedTo ? { id: b.assignedTo.id, email: b.assignedTo.email } : null,
         })) || [],
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,

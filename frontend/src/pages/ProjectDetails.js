@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { API_BASE_URL } from "../config";
 import "./ProjectDetails.css";
 
@@ -11,6 +11,14 @@ const ProjectDetails = () => {
   const [error, setError] = useState("");
   const [currentUserId, setCurrentUserId] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    description: "",
+    severity: "Medium",
+    priority: "Medium",
+    commit_link: ""
+  });
+  const [resolutionLinks, setResolutionLinks] = useState({});
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -122,6 +130,79 @@ const ProjectDetails = () => {
     );
   }
 
+
+
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleReportBug = async (e) => {
+    e.preventDefault();
+    try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_BASE_URL}/api/bugs`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ ...formData, projectId: id })
+        });
+        
+        if (!response.ok) throw new Error("Eroare la raportare bug");
+        
+        setFormData({ description: "", severity: "Medium", priority: "Medium", commit_link: "" });
+        fetchProjectDetails();
+    } catch (err) {
+        setError(err.message);
+    }
+  };
+
+  const handleAssignBug = async (bugId) => {
+    try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_BASE_URL}/api/bugs/${bugId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ assignedToId: currentUserId })
+        });
+
+        if (!response.ok) throw new Error("Eroare la alocare bug");
+        fetchProjectDetails();
+    } catch (err) {
+        alert(err.message);
+    }
+  };
+
+  const handleResolveBug = async (bugId) => {
+    try {
+        const link = resolutionLinks[bugId];
+        if (!link || !link.trim()) {
+            alert("Te rog să introduci un link de commit pentru a marca bug-ul ca rezolvat.");
+            return;
+        }
+
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_BASE_URL}/api/bugs/${bugId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ bugStatus: "RESOLVED", commit_link: resolutionLinks[bugId] })
+        });
+
+        if (!response.ok) throw new Error("Eroare la rezolvare bug");
+        setResolutionLinks({ ...resolutionLinks, [bugId]: "" });
+        fetchProjectDetails();
+    } catch (err) {
+        alert(err.message);
+    }
+  };
+
   return (
     <div className="project-details-container">
       <button onClick={() => navigate("/dashboard")} className="back-btn">
@@ -154,9 +235,20 @@ const ProjectDetails = () => {
       {/* Zona 2 - Echipa */}
       <div className="section">
         <h2>Echipa</h2>
-        {project.members && project.members.length > 0 ? (
+        {project.members || project.owner ? (
           <div className="members-list">
-            {project.members.map((member) => (
+            {/* Afisam Owner-ul primul */}
+            {project.owner && (
+                <div key={`owner-${project.owner.id}`} className="member-item" style={{ borderLeft: "4px solid #007bff" }}>
+                    <div className="member-info">
+                        <span className="member-email">{project.owner.email}</span>
+                        <span className="member-role">({project.owner.role}) - <strong>OWNER</strong></span>
+                    </div>
+                </div>
+            )}
+
+            {/* Apoi restul membrilor */}
+            {project.members && project.members.map((member) => (
               <div key={member.id} className="member-item">
                 <div className="member-info">
                   <span className="member-email">{member.email}</span>
@@ -178,6 +270,35 @@ const ProjectDetails = () => {
         )}
       </div>
 
+       {/* Formular Raportare Bug (doar TST) */}
+       {localStorage.getItem("role") === "TST" && (
+        <div className="section">
+            <h2>Raporteaza un Bug</h2>
+            <form onSubmit={handleReportBug} className="bug-form">
+                <textarea name="description" placeholder="Descriere bug" value={formData.description} onChange={handleInputChange} required />
+                <div className="form-group">
+                    <label>Severitate</label>
+                    <select name="severity" value={formData.severity} onChange={handleInputChange}>
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                        <option value="Critical">Critical</option>
+                    </select>
+                </div>
+                <div className="form-group">
+                    <label>Prioritate</label>
+                    <select name="priority" value={formData.priority} onChange={handleInputChange}>
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                    </select>
+                </div>
+                <input type="text" name="commit_link" placeholder="Link Commit (optional)" value={formData.commit_link} onChange={handleInputChange} />
+                <button type="submit">Raporteaza Bug</button>
+            </form>
+        </div>
+      )}
+
       {/* Zona 3 - Lista de Bug-uri */}
       <div className="section">
         <h2>Bug-uri</h2>
@@ -191,6 +312,14 @@ const ProjectDetails = () => {
                 </div>
                 <div className="bug-details">
                   <div className="bug-detail-item">
+                    <strong>Severitate:</strong>{" "}
+                    <span
+                      className={`severity-badge severity-${bug.severity?.toLowerCase()}`}
+                    >
+                        {bug.severity || "N/A"}
+                    </span>
+                  </div>
+                  <div className="bug-detail-item">
                     <strong>Prioritate:</strong>{" "}
                     <span
                       className={`priority-badge priority-${bug.priority?.toLowerCase()}`}
@@ -201,13 +330,40 @@ const ProjectDetails = () => {
                   <div className="bug-detail-item">
                     <strong>Status:</strong>{" "}
                     <span
-                      className={`status-badge status-${bug.status
+                      className={`status-badge status-${bug.bugStatus
                         ?.toLowerCase()
                         .replace(/\s+/g, "-")}`}
                     >
-                      {bug.status || "N/A"}
+                      {bug.bugStatus || "N/A"}
                     </span>
                   </div>
+                  <div className="bug-detail-item">
+                    <strong>Alocat lui:</strong> {bug.assignedTo ? bug.assignedTo.email : "Nealocat"}
+                  </div>
+                  {bug.commit_link && (
+                       <div className="bug-detail-item">
+                       <strong>Solutie:</strong> <a href={bug.commit_link} target="_blank" rel="noopener noreferrer" className="commit-link">Vezi rezolvarea</a>
+                     </div>
+                  )}
+
+                  {/* Actiuni MP */}
+                  {localStorage.getItem("role") === "MP" && !bug.assignedToId && (
+                      <button onClick={() => handleAssignBug(bug.id)} className="assign-btn">Aloca-mi mie</button>
+                  )}
+                   {localStorage.getItem("role") === "MP" && bug.assignedToId === currentUserId && (
+                      <div className="resolve-container">
+                          <input 
+                            type="text" 
+                            placeholder="Link Commit Rezolvare" 
+                            value={resolutionLinks[bug.id] || ""} 
+                            onChange={(e) => setResolutionLinks({...resolutionLinks, [bug.id]: e.target.value})} 
+                          />
+                          <button onClick={() => handleResolveBug(bug.id)} className="resolve-btn">
+                              {bug.bugStatus === "RESOLVED" ? "Actualizeaza rezolvare" : "Marcheaza ca Rezolvat"}
+                          </button>
+                      </div>
+                  )}
+
                 </div>
               </div>
             ))}

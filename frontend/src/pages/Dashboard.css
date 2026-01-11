@@ -169,11 +169,14 @@
   align-items: flex-start;
   margin-bottom: 10px;
   width: 100%;
+  gap: 10px;
 }
 
 .card-header .project-title {
   flex: 1;
-  padding-right: 10px;
+  min-width: 0;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .delete-btn {
@@ -186,6 +189,9 @@
   padding: 5px 10px;
   border-radius: 4px;
   transition: all 0.2s ease;
+  width: 100%;
+  margin-top: 10px;
+  text-align: center;
 }
 
 .delete-btn:hover {

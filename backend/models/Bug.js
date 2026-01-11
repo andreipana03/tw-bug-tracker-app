@@ -12,6 +12,11 @@ const Bug = sequelize.define('Bug', {
     type: DataTypes.STRING,
     allowNull: false
   },
+  severity: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: "Medium"
+  },
   commit_link: {
     type: DataTypes.STRING
   },
