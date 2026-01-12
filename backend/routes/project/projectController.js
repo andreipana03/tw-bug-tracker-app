@@ -1,3 +1,4 @@
+const { Op } = require("sequelize");
 const Project = require("../../models/Project.js");
 const User = require("../../models/User.js");
 const ProjectMember = require("../../models/ProjectMember.js");
@@ -6,7 +7,7 @@ const Bug = require("../../models/Bug.js");
 // POST /projects - create project (only MP)
 const createProject = async (req, res, next) => {
   try {
-    const { projectName, repositoryName } = req.body;
+    const { projectName, repositoryName, teamMembers } = req.body;
 
     if (!projectName || !repositoryName) {
       return res
@@ -28,6 +29,10 @@ const createProject = async (req, res, next) => {
       ownerId,
     });
 
+    if (teamMembers && teamMembers.length > 0) {
+      await project.addMembers(teamMembers);
+    }
+
     res.status(201).json(project);
   } catch (error) {
     next(error);
@@ -35,7 +40,6 @@ const createProject = async (req, res, next) => {
 };
 
 // GET /projects - lista proiectelor la care userul are acces
-// For now: all projects where user is owner
 const getProjects = async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -51,15 +55,24 @@ const getProjects = async (req, res, next) => {
       return res.json(allProjects);
     }
 
-    const owned = await Project.findAll({
-      where: { ownerId: userId },
+    const memberships = await ProjectMember.findAll({
+      where: { userId: userId },
+      attributes: ["projectId"],
+    });
+
+    const memberProjectIds = memberships.map((m) => m.projectId);
+
+    const projects = await Project.findAll({
+      where: {
+        [Op.or]: [{ ownerId: userId }, { id: memberProjectIds }],
+      },
       include: [
         { model: User, as: "owner", attributes: ["id", "email", "role"] },
         { model: User, as: "members", attributes: ["id", "email", "role"] },
       ],
     });
 
-
+    res.json(projects);
   } catch (error) {
     next(error);
   }
@@ -87,6 +100,7 @@ const getProjectById = async (req, res, next) => {
         },
         {
           model: Bug,
+          as: "Bugs",
           attributes: [
             "id",
             "description",
@@ -123,8 +137,6 @@ const getProjectById = async (req, res, next) => {
         .json({ message: "You do not have access to this project" });
     }
 
-
-
     const response = {
       id: project.id,
       projectName: project.projectName,
@@ -151,7 +163,9 @@ const getProjectById = async (req, res, next) => {
           bugStatus: b.bugStatus,
           commit_link: b.commit_link,
           assignedToId: b.assignedToId,
-          assignedTo: b.assignedTo ? { id: b.assignedTo.id, email: b.assignedTo.email } : null,
+          assignedTo: b.assignedTo
+            ? { id: b.assignedTo.id, email: b.assignedTo.email }
+            : null,
         })) || [],
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,

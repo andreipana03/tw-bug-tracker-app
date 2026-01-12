@@ -80,7 +80,7 @@ Aplicatia este dezvoltata incremental, urmand mai multe etape logice si tehnice.
 - Initializarea mediilor de lucru pentru:
   - **Back-end:** Node.js  
   - **Front-end:** React  
-- Configurarea conexiunii la **PostgreSQL** prin **Prisma**
+- Configurarea conexiunii la **MySQL** prin **Sequelize**
 
 ---
 
@@ -113,3 +113,25 @@ Aplicatia este dezvoltata incremental, urmand mai multe etape logice si tehnice.
 ---
 
 
+---
+
+### Ghid de Instalare si Configurare
+### Clonarea Proiectului
+Se deschide un terminal si se cloneaza repository-ul de pe GitHub pe calculatorul local folosind comanda:
+git clone https://github.com/andreipana03/tw-bug-tracker-app.git 
+cd <NUME_FOLDER_PROIECT>
+
+Se navigheaza in folderul dedicat serverului si se instaleaza dependentele necesare proiectului: 
+cd backend 
+npm install
+
+Se creeaza un fisier numit .env in radacina folderului backend, in care se configureaza variabilele de mediu (portul, utilizatorul si parola bazei de date).Se urmeaza exemplul din fisierul .env.example
+
+Se acceseaza MySQL Workbench, se deschide o conexiune locala si se ruleaza comanda pentru crearea bazei de date: 
+CREATE DATABASE tw_project;
+
+Se deschide un terminal nou catre folderul interfetei grafice si se instaleaza bibliotecile necesare: 
+cd ../frontend 
+npm install
+
+Se pornesc cele doua componente ale aplicatiei folosind doua terminale separate.

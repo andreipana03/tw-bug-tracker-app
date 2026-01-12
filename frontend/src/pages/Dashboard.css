@@ -127,13 +127,8 @@
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s;
 }
 
-.project-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
 
 .project-title {
   color: #007bff;
@@ -197,5 +192,4 @@
 .delete-btn:hover {
   background-color: #fee2e1; 
   color: #c82333; 
-  text-decoration: underline;
 }

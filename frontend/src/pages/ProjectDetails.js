@@ -4,7 +4,7 @@ import { API_BASE_URL } from "../config";
 import "./ProjectDetails.css";
 
 const ProjectDetails = () => {
-  const { id } = useParams();
+  const { id } = useParams();//extrage id ul din url
   const navigate = useNavigate();
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -158,6 +158,8 @@ const ProjectDetails = () => {
     }
   };
 
+
+//alocare bug
   const handleAssignBug = async (bugId) => {
     try {
       const token = localStorage.getItem("token");

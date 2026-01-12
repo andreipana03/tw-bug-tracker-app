@@ -39,7 +39,7 @@ const addProjectMember = async (req, res, next) => {
 
 const getProjectMembers = async (req, res, next) => {
   try {
-    const { projectId } = req.body;
+    const { projectId } = req.params;
     const members = await ProjectMember.findAll({
       where: { projectId },
       include: {
